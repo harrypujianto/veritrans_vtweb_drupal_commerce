@@ -28,7 +28,7 @@ function commerce_veritrans_web_commerce_payment_method_info() {
 /**
  * Payment method callback: settings form.
  */
-function commerce_veritrans_web_settings_form($settings = NULL) {
+function commerce_veritrans_web_settings_form( $settings = NULL) {
   $form = array();
   $settings = (array) $settings + array(
     'payment_label' => '',
@@ -177,12 +177,16 @@ function commerce_veritrans_web_settings_form($settings = NULL) {
   return $form;
 }
 
-// function commerce_veritrans_web_settings_form_submit(&$form_state){
-//   if ($form_state['values']['server_key']) {
-//     variable_set('commerce_veritrans_web_settings', $form_state['values']['server_key']);
-//     error_log('saved '.print_r(variable_get('server_key')));
-//   }
-// }
+function commerce_veritrans_web_settings_form_submit(&$form_state){
+  if ($form_state['values']['server_key']) {
+    variable_set('commerce_veritrans_web_server_key', $form_state['values']['server_key']);
+    error_log('saved '.print_r(variable_get('server_key')));
+  }  
+
+  if ($form_state['values']['payment_mode']) {
+    variable_set('commerce_veritrans_payment_mode', $form_state['values']['payment_mode']);
+  }
+}
 
 /**
  * Payment method callback: redirect form.
@@ -314,6 +318,19 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
   if($settings['payment_indosat_dompetku']){
     $payements_type[] = 'indosat_dompetku';
   }
+
+  //// ultimate add
+  if ($settings['server_key']) {
+    variable_set('commerce_veritrans_web_server_key', $settings['server_key']);
+    error_log('saved key'.variable_get('commerce_veritrans_web_server_key'));
+  }  
+
+  if ($settings['payment_mode']) {
+    variable_set('commerce_veritrans_web_payment_mode', $settings['payment_mode']);
+    error_log('saved mode'.variable_get('commerce_veritrans_web_payment_mode'));
+    error_log('should be '.$settings['payment_mode']);
+  }
+  ///// end of add
 
   $params = array(
     "vtweb" => array(

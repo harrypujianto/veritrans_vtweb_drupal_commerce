@@ -66,14 +66,17 @@ function commerce_veritrans_menu() {
  * @return bool
  *   TRUE or FALSE indicating whether the IPN was successfully processed or not.
  */
-function commerce_veritrans_process_ipn($settings = array()) {
+function commerce_veritrans_process_ipn() {
   // libraries_load('veritrans');
-  Veritrans_Config::$serverKey = variable_get('server_key');
-  error_log('server_key '.print_r(variable_get('server_key'),true)); //debugan
-  Veritrans_Config::$isProduction = (variable_get('payment_mode') == 'TEST') ? FALSE : TRUE;
+  Veritrans_Config::$serverKey = variable_get('commerce_veritrans_web_server_key');
+  // error_log('server_key '.print_r($payment_method['settings']['server_key'],true)); //debugan
+  Veritrans_Config::$isProduction = (variable_get('commerce_veritrans_web_payment_mode') == 'TEST') ? FALSE : TRUE;
+
+  // error_log(Veritrans_Config::$serverKey.'###'.Veritrans_Config::$isProduction); //debugan
 
   $response = new Veritrans_Notification();
 
+  // error_log('exit point response '.print_r($response, TRUE)); //debugan
   // Exit now if the $_POST was empty.
   if (empty($response)) {
     watchdog('commerce_veritrans', 'IPN URL accessed with no POST data submitted.', array(), WATCHDOG_WARNING);
@@ -81,9 +84,10 @@ function commerce_veritrans_process_ipn($settings = array()) {
   }
 
   watchdog('commerce_veritrans', 'Responce from Veritrans ! Response: !Response :.', array('!Response' => '<pre>' . print_r($response, TRUE) . '</pre>'), WATCHDOG_DEBUG);
+
   if (isset($response) && !empty($response)) {
     // Prepare a transaction object to log the API response.
-    $transaction = commerce_payment_transaction_new('commerce_direcpay', $response->order_id);
+    $transaction = commerce_payment_transaction_new('commerce_veritrans_web', $response->order_id);
     $order = commerce_order_load($response->order_id);
     $transaction->uid = $order->uid;
     $transaction->currency_code = $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code'];
@@ -98,6 +102,8 @@ function commerce_veritrans_process_ipn($settings = array()) {
     $transaction_status = $response->transaction_status;
     $fraud = $response->fraud_status;
 
+    // error_log('VTtransaction status: '.$transaction_status ); //debugan
+    // error_log('transaction->status: '.$transaction->status ); //debugan
     if ($transaction_status == 'capture') {
       if ($fraud == 'challenge') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
@@ -105,6 +111,12 @@ function commerce_veritrans_process_ipn($settings = array()) {
       elseif ($fraud == 'accept') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
       }
+    }
+    elseif ($transaction_status == 'settlement') {
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    }
+    elseif ($transaction_status == 'pending') {
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
     }
     elseif ($transaction_status == 'cancel') {
       // if ($fraud == 'challenge' || $fraud == 'accept') {
@@ -115,6 +127,8 @@ function commerce_veritrans_process_ipn($settings = array()) {
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     }
 
+    // error_log('transaction->status: '.$transaction->status ); //debugan
+    // error_log('transaction: '.print_r($transaction,true) ); //debugan
     commerce_payment_transaction_save($transaction);
   }
 }
