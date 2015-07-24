@@ -10,12 +10,25 @@ require_once('/../libraries/veritrans-php/Veritrans.php');
  */
 function commerce_veritrans_web_commerce_payment_method_info() {
   $payment_methods = array();
+  $payment = commerce_payment_method_instance_load('commerce_veritrans_web|commerce_payment_commerce_veritrans_web');
+  
+  // if empty, set default
+  if(!isset($payment['settings']['payment_label'])){
+    $payment['settings']['payment_label'] = 'Payment via Veritrans';
+  }
+  else if($payment['settings']['payment_label'] == '' OR !$payment['settings']['payment_label']){
+    $payment['settings']['payment_label'] = 'Payment via Veritrans'; 
+  }
+
+  // add image
+  // $payment['settings']['payment_label'] = $payment['settings']['payment_label'].'<br><img alt="" src="http://www.w3schools.com/html/html5.gif"></img>'; 
+  // error_log('labelnya coy '.$payment['settings']['payment_label']); //debugan
 
   $payment_methods['commerce_veritrans_web'] = array(
     'base' => 'commerce_veritrans_web',
     'title' => t('Veritrans VT-Web'),
     'short_title' => t('VT-Web'),
-    'display_title' => t('Veritrans Payment Gateway for VT-Web'),
+    'display_title' => t($payment['settings']['payment_label']),
     'description' => t('Veritrans Payment Gateway for VT-Web'),
     'terminal' => TRUE,
     'offsite' => TRUE,
@@ -31,6 +44,7 @@ function commerce_veritrans_web_commerce_payment_method_info() {
 function commerce_veritrans_web_settings_form( $settings = NULL) {
   $form = array();
   $settings = (array) $settings + array(
+    'conversion' => '',
     'payment_label' => '',
     'server_key' => '',
     'client_key' => '',
@@ -40,14 +54,14 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
     'payment_mode' => '',
   );
 
-  // $form['payment_label'] = array(
-  //   '#type' => 'textfield',
-  //   '#title' => t('Frontend Payment Text Label'),
-  //   '#description' => t('Frontend payment text label that will be displayed to your customer'),
-  //   '#default_value' => variable_get($settings['payment_label']),
-  //   '#size' => 50,
-  //   '#required' => TRUE,
-  // );
+  $form['payment_label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Frontend Payment Text Label'),
+    '#description' => t('Frontend payment text label that will be displayed to your customer, default is "Payment via Veritrans"'),
+    '#default_value' => $settings['payment_label'],
+    '#size' => 50,
+    '#required' => TRUE,
+  );
 
   $form['server_key'] = array(
     '#type' => 'textfield',
@@ -72,6 +86,15 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
     '#description' => t('Payment is 3D-Secure'),
   );
 
+  $form['conversion'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Currency Conversion Rate to IDR'),
+    '#description' => t('Input currency conversion rate if you are not using IDR as default currency (example: <strong>"10000"</strong>). If you already use IDR as currency, please input <strong>"1"</strong>'),
+    '#default_value' => $settings['conversion'],
+    '#size' => 50,
+    '#required' => TRUE,
+  );
+
   $form['payment_mode'] = array(
     '#type' => 'select',
     '#title' => t('Payment mode'),
@@ -84,9 +107,6 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
   );
 
   /*
-   * If Need then pass these types in options.
-   * $types = array(t('Credit Card'), t('Mandiri ClickPay'),t('CIMB Clicks'), 
-   * t('Virtual Account'), t('e-Pay BRI'),);
    */
    
   $form['payment_type_credit_card'] = array(
@@ -173,20 +193,13 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
   //   '#default_value' => array('Credit Card'),
   //   '#attributes' => array('disabled'=>'disabled'),
   // );
-
+  // $form['submit'] = array(
+  //   '#type' => 'submit', 
+  //   '#value' => t('SAVE'),
+  // );
   return $form;
 }
 
-function commerce_veritrans_web_settings_form_submit(&$form_state){
-  if ($form_state['values']['server_key']) {
-    variable_set('commerce_veritrans_web_server_key', $form_state['values']['server_key']);
-    error_log('saved '.print_r(variable_get('server_key')));
-  }  
-
-  if ($form_state['values']['payment_mode']) {
-    variable_set('commerce_veritrans_payment_mode', $form_state['values']['payment_mode']);
-  }
-}
 
 /**
  * Payment method callback: redirect form.
@@ -234,9 +247,9 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
   // Ensure a default value for the payment_method setting.
   $settings += array('payment_method' => '');
 
-  // Get the order total in the default currency.
+  // Get the order total in the default currency. then multiply it by conversion rate
   $order_total = $order_wrapper->commerce_order_total->amount->value();
-  $amount = commerce_currency_amount_to_decimal($order_total, $currency_code);
+  $amount = commerce_currency_amount_to_decimal($order_total, $currency_code) * $settings['conversion'];
 
   // Build a description for the order.
   $items_details = array();
@@ -246,7 +259,7 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
     $line_item_price = $line_item_wrapper->commerce_unit_price->amount->value();
     $item['id'] = $line_item_wrapper->line_item_id->value();
     $item['quantity'] = round($line_item_wrapper->quantity->value(), 2);
-    $item['price'] = commerce_currency_amount_to_decimal($line_item_price, $currency_code);
+    $item['price'] = commerce_currency_amount_to_decimal($line_item_price, $currency_code) * $settings['conversion'];
     $item['name'] = $line_item_wrapper->line_item_label->value();
     $items_details[] = $item;
   }
@@ -320,16 +333,16 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
   }
 
   //// ultimate add
-  if ($settings['server_key']) {
-    variable_set('commerce_veritrans_web_server_key', $settings['server_key']);
-    error_log('saved key'.variable_get('commerce_veritrans_web_server_key'));
-  }  
+  // if ($settings['server_key']) {
+  //   variable_set('commerce_veritrans_web_server_key', $settings['server_key']);
+  //   error_log('saved key'.variable_get('commerce_veritrans_web_server_key'));
+  // }  
 
-  if ($settings['payment_mode']) {
-    variable_set('commerce_veritrans_web_payment_mode', $settings['payment_mode']);
-    error_log('saved mode'.variable_get('commerce_veritrans_web_payment_mode'));
-    error_log('should be '.$settings['payment_mode']);
-  }
+  // if ($settings['payment_mode']) {
+  //   variable_set('commerce_veritrans_web_payment_mode', $settings['payment_mode']);
+  //   error_log('saved mode'.variable_get('commerce_veritrans_web_payment_mode'));
+  //   error_log('should be '.$settings['payment_mode']);
+  // }
   ///// end of add
 
   $params = array(

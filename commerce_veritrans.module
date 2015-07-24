@@ -67,10 +67,18 @@ function commerce_veritrans_menu() {
  *   TRUE or FALSE indicating whether the IPN was successfully processed or not.
  */
 function commerce_veritrans_process_ipn() {
+  $payment = commerce_payment_method_instance_load('commerce_veritrans_web|commerce_payment_commerce_veritrans_web');
+  // DEBUG
+  // error_log('$payment: '.print_r($payment,true));
+  // error_log('$payment[settings]: '.print_r($payment['settings'],true));
+  // error_log('$payment[settings][payment_mode]: '.print_r($payment['settings']['payment_mode'],true));
+  // return false;
+  // DEBUG
+  
   // libraries_load('veritrans');
-  Veritrans_Config::$serverKey = variable_get('commerce_veritrans_web_server_key');
+  Veritrans_Config::$serverKey = $payment['settings']['server_key'];
   // error_log('server_key '.print_r($payment_method['settings']['server_key'],true)); //debugan
-  Veritrans_Config::$isProduction = (variable_get('commerce_veritrans_web_payment_mode') == 'TEST') ? FALSE : TRUE;
+  Veritrans_Config::$isProduction = ($payment['settings']['payment_mode'] == 'TEST') ? FALSE : TRUE;
 
   // error_log(Veritrans_Config::$serverKey.'###'.Veritrans_Config::$isProduction); //debugan
 
@@ -95,7 +103,7 @@ function commerce_veritrans_process_ipn() {
     $transaction->remote_id = $response->transaction_id;
     $transaction->remote_status = $response->transaction_status;
     $transaction->payload = $response;
-    $transaction->amount = commerce_currency_decimal_to_amount($response->gross_amount, $transaction->currency_code);
+    $transaction->amount = commerce_currency_decimal_to_amount($response->gross_amount, $transaction->currency_code) / $payment['settings']['conversion'];
     $transaction->message = $response->status_message;
 
     // Set the transaction status based on SUCCESS or FAIL.
