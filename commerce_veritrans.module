@@ -103,7 +103,7 @@ function commerce_veritrans_process_ipn() {
     $transaction->remote_id = $response->transaction_id;
     $transaction->remote_status = $response->transaction_status;
     $transaction->payload = $response;
-    $transaction->amount = commerce_currency_decimal_to_amount($response->gross_amount, $transaction->currency_code) / $payment['settings']['conversion'];
+    $transaction->amount = commerce_currency_decimal_to_amount($response->gross_amount / $payment['settings']['conversion'], $transaction->currency_code);
     $transaction->message = $response->status_message;
 
     // Set the transaction status based on SUCCESS or FAIL.
@@ -115,28 +115,36 @@ function commerce_veritrans_process_ipn() {
     if ($transaction_status == 'capture') {
       if ($fraud == 'challenge') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        commerce_order_status_update($order, $name = 'pending', $skip_save = FALSE, $revision = TRUE);
       }
       elseif ($fraud == 'accept') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        commerce_order_status_update($order, $name = 'processing', $skip_save = FALSE, $revision = TRUE);
       }
     }
     elseif ($transaction_status == 'settlement') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        commerce_order_status_update($order, $name = 'processing', $skip_save = FALSE, $revision = TRUE);
     }
     elseif ($transaction_status == 'pending') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        commerce_order_status_update($order, $name = 'pending', $skip_save = FALSE, $revision = TRUE);
     }
     elseif ($transaction_status == 'cancel') {
       // if ($fraud == 'challenge' || $fraud == 'accept') {
-      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $transaction->amount = -($transaction->amount);
+      commerce_order_status_update($order, $name = 'canceled', $skip_save = FALSE, $revision = TRUE);
+      $transaction->message = 'Cancel, payment canceled';
       //}
     }
     elseif ($transaction_status == 'deny') {
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      commerce_order_status_update($order, $name = 'pending', $skip_save = FALSE, $revision = TRUE);
     }
 
     // error_log('transaction->status: '.$transaction->status ); //debugan
-    // error_log('transaction: '.print_r($transaction,true) ); //debugan
+    error_log('transaction: '.print_r($transaction,true) ); //debugan
     commerce_payment_transaction_save($transaction);
   }
 }
