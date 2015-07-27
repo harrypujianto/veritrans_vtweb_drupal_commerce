@@ -22,7 +22,6 @@ function commerce_veritrans_web_commerce_payment_method_info() {
 
   // add image
   // $payment['settings']['payment_label'] = $payment['settings']['payment_label'].'<br><img alt="" src="http://www.w3schools.com/html/html5.gif"></img>'; 
-  // error_log('labelnya coy '.$payment['settings']['payment_label']); //debugan
 
   $payment_methods['commerce_veritrans_web'] = array(
     'base' => 'commerce_veritrans_web',
@@ -98,10 +97,10 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
   $form['payment_mode'] = array(
     '#type' => 'select',
     '#title' => t('Payment mode'),
-    '#description' => t('The mode for capturing payment.'),
+    '#description' => t('Use sandbox if you use veritrans sandbox MAP account for testing, and use production if you use production MAP account, don\'t forget to change serverkey according to sandbox or production account.'),
     '#options' => array(
-      'LIVE' => t('Live transactions'),
-      'TEST' => t('Test transactions'),
+      'LIVE' => t('Production mode'),
+      'TEST' => t('Sandbox mode'),
     ),
     '#default_value' => $settings['payment_mode'],
   );
@@ -193,17 +192,12 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
   //   '#default_value' => array('Credit Card'),
   //   '#attributes' => array('disabled'=>'disabled'),
   // );
-  // $form['submit'] = array(
-  //   '#type' => 'submit', 
-  //   '#value' => t('SAVE'),
-  // );
   return $form;
 }
 
 
 /**
  * Payment method callback: redirect form.
- *   A wrapper around the module's general use function for building a WPS form.
  */
 function commerce_veritrans_web_redirect_form($form, &$form_state, $order, $payment_method) {
   // Return an error if the enabling action's settings haven't been configured.
@@ -227,19 +221,10 @@ function commerce_veritrans_web_redirect_form($form, &$form_state, $order, $paym
 }
 
 /**
- * Builds a DirectPay Paymentform from an order object.
- *
+ * 
  * @param object $order
  *   The fully loaded order being paid for.
  * @param array $settings
- *   An array of settings used to build out the form, including:
- *   - server: which server to use, either sandbox or live
- *   - cancel_return: the URL PayPal should send the user to on cancellation
- *   - return: the URL PayPal should send the user to on successful payment
- *   - currency_code: the PayPal currency code to use for this payment if the
- *     total for the order is in a non-PayPal supported currency
- *   - payment_method: optionally the name of the Commerce payment method to
- *     include in the IPN notify_url.
  */
 function commerce_veritrans_web_order_form($form, &$form_state, $order, $settings = array()) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -278,25 +263,6 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
   // Prepare the billing address for use in the request.
   $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
-  // $payements_type_list = array(
-  //   'Credit Card' => 'credit_card',
-  //   'Mandiri ClickPay' => 'mandiri_clickpay',
-  //   'CIMB Clicks' => 'cimb_clicks',
-  //   'Virtual Account' => 'bank_transfer',
-  //   'e-Pay BRI' => 'bri_epay',
-  // );
-
-  // error_log('============================================================='); //debugan
-  // error_log('payment type settings: '.print_r($settings,true)); //debugan
-  // $payements_type = array();
-  // foreach ($settings['payment_type'] as $value) {
-  // error_log('foreach value: '.$value); //debugan
-  //   if ($value) {
-  //     error_log('$payements_type_list[$value]: '.$payements_type_list[$value]); //debugan
-  //     $payements_type[] = $payements_type_list[$value];
-  //   }
-  // }
-  // error_log('payments_type[]: '.print_r($payements_type,true)); //debugan
 
   if($settings['payment_type_credit_card']){
     $payements_type[] = 'credit_card';
@@ -332,18 +298,6 @@ function commerce_veritrans_web_order_form($form, &$form_state, $order, $setting
     $payements_type[] = 'indosat_dompetku';
   }
 
-  //// ultimate add
-  // if ($settings['server_key']) {
-  //   variable_set('commerce_veritrans_web_server_key', $settings['server_key']);
-  //   error_log('saved key'.variable_get('commerce_veritrans_web_server_key'));
-  // }  
-
-  // if ($settings['payment_mode']) {
-  //   variable_set('commerce_veritrans_web_payment_mode', $settings['payment_mode']);
-  //   error_log('saved mode'.variable_get('commerce_veritrans_web_payment_mode'));
-  //   error_log('should be '.$settings['payment_mode']);
-  // }
-  ///// end of add
 
   $params = array(
     "vtweb" => array(
