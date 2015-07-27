@@ -23,8 +23,8 @@ The following plugin is tested under following environment:
 #### Installation Process
 The manual installation method involves downloading our feature-rich plugin and uploading it to your webserver via your favourite FTP application.
 
-1. Download the plugin file to your computer and unzip it
-2. Using an FTP program, or your hosting control panel, upload the unzipped plugin folder to your Drupal installation's ``[Drupal folder]/sites/all/`` directory. 
+1. Download the plugin file to your computer and unzip it, rename folder to ``commerce_veritrans``
+2. Using an FTP program, or your hosting control panel, upload the unzipped plugin folder to your Drupal modules installation's ``[Drupal folder]/sites/all/modules/`` directory. 
 
 (Refer to this link for more info on installing module for drupal: [Drupal module install ](https://www.drupal.org/node/70151))
 
