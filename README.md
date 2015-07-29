@@ -46,7 +46,7 @@ The manual installation method involves downloading our feature-rich plugin and 
 
 #### Veritrans Map Configuration
 1. Go to **Settings > Configuration**
-2. Insert ``http://[your web]`` as your Payment Notification URL in your MAP
+2. Insert ``http://[your web]/commerce_veritrans/ipn`` as your Payment Notification URL in your MAP
 3. Insert ``http://[your web]`` link as Finish/Unfinish/Error Redirect URL in your MAP configuration.
 
 #### Get help
