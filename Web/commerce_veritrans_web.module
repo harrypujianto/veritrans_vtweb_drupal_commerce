@@ -35,6 +35,17 @@ function commerce_veritrans_web_commerce_payment_method_info() {
     'terminal' => TRUE,
     'offsite' => TRUE,
     'offsite_autoredirect' => TRUE,
+    'payment_type_credit_card' => FALSE,
+    'payment_type_mandiri_clickpay' => FALSE,
+    'payment_type_cimb_clicks' => FALSE,
+    'payment_type_bank_transfer' => FALSE,
+    'payment_type_bri_epay' => FALSE,
+    'payment_type_telkomsel_cash' => FALSE,
+    'payment_type_xl_tunai' => FALSE,
+    'payment_type_echannel' => FALSE,
+    'payment_type_bbm_money' => FALSE,
+    'payment_type_cstore' => FALSE,
+    'payment_indosat_dompetku' => FALSE,
   );
 
   return $payment_methods;
