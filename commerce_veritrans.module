@@ -5,7 +5,9 @@
  */
 
 // load library
-require_once('libraries/veritrans-php/Veritrans.php');
+$rootplugin = dirname(__FILE__);
+require_once($rootplugin.'/libraries/veritrans-php/Veritrans.php'); 
+// require_once('libraries/veritrans-php/Veritrans.php');
 
 /**
  * Implements hook_libraries_info().

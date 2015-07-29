@@ -1,5 +1,8 @@
 <?php
-require_once('/../libraries/veritrans-php/Veritrans.php');
+$rootplugin = dirname(dirname(__FILE__));
+require_once($rootplugin.'/libraries/veritrans-php/Veritrans.php'); 
+
+// require_once('/../libraries/veritrans-php/Veritrans.php');
 /**
  * @file
  * Veritrans payment method for Drupal Commerce for testing and development.
