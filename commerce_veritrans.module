@@ -127,6 +127,8 @@ function commerce_veritrans_process_ipn() {
     elseif ($transaction_status == 'deny') {
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       commerce_order_status_update($order, $name = 'pending', $skip_save = FALSE, $revision = TRUE);
+    }else{
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     }
 
     // error_log('transaction->status: '.$transaction->status ); //debugan
