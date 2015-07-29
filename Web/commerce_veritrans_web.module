@@ -65,6 +65,17 @@ function commerce_veritrans_web_settings_form( $settings = NULL) {
     'is_sanitized' => '',
     'is3ds' => '',
     'payment_mode' => '',
+    'payment_type_credit_card' => FALSE,
+    'payment_type_mandiri_clickpay' => FALSE,
+    'payment_type_cimb_clicks' => FALSE,
+    'payment_type_bank_transfer' => FALSE,
+    'payment_type_bri_epay' => FALSE,
+    'payment_type_telkomsel_cash' => FALSE,
+    'payment_type_xl_tunai' => FALSE,
+    'payment_type_echannel' => FALSE,
+    'payment_type_bbm_money' => FALSE,
+    'payment_type_cstore' => FALSE,
+    'payment_indosat_dompetku' => FALSE,
   );
 
   $form['payment_label'] = array(
