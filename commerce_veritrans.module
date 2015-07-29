@@ -95,6 +95,7 @@ function commerce_veritrans_process_ipn() {
     // Set the transaction status based on SUCCESS or FAIL.
     $transaction_status = $response->transaction_status;
     $fraud = $response->fraud_status;
+    $payment_type = $response->payment_type;
 
     // error_log('VTtransaction status: '.$transaction_status ); //debugan
     // error_log('transaction->status: '.$transaction->status ); //debugan
@@ -109,8 +110,15 @@ function commerce_veritrans_process_ipn() {
       }
     }
     elseif ($transaction_status == 'settlement') {
+      // error_log($payment_type); //debugan
+      // error_log(print_r($response,true)); //debugan
+      if($payment_type != 'credit_card'){
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
         commerce_order_status_update($order, $name = 'processing', $skip_save = FALSE, $revision = TRUE);
+      } else{
+        // error_log('do nothing'); //debugan
+        return;
+      }
     }
     elseif ($transaction_status == 'pending') {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
