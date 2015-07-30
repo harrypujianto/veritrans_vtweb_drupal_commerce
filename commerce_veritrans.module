@@ -134,7 +134,8 @@ function commerce_veritrans_process_ipn() {
     }
     elseif ($transaction_status == 'deny') {
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-      commerce_order_status_update($order, $name = 'pending', $skip_save = FALSE, $revision = TRUE);
+      commerce_order_status_update($order, $name = 'canceled', $skip_save = FALSE, $revision = TRUE);
+      $transaction->message = 'Denied, payment by denied by Veritrans';
     }else{
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     }
